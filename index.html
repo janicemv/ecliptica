@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Eclíptica &amp; Movimento Retrógrado</title>
+<style>
+  :root {
+    --bg-deep: #0a0720;
+    --bg-panel: #120c2e;
+    --bg-panel-hover: #1b1440;
+    --accent: #a878f7;
+    --accent-2: #3a7fd0;
+    --text-primary: #f2eefc;
+    --text-secondary: #a8a0c8;
+    --text-muted: #6f6890;
+    --border: rgba(168, 120, 247, 0.18);
+  }
+
+  * { box-sizing: border-box; }
+
+  html, body {
+    margin: 0;
+    height: 100%;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: var(--bg-deep);
+    color: var(--text-primary);
+  }
+
+  body {
+    display: flex;
+    overflow: hidden;
+  }
+
+  /* Starfield backdrop */
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    background-image:
+      radial-gradient(1.5px 1.5px at 10% 20%, rgba(255,255,255,0.5), transparent),
+      radial-gradient(1.5px 1.5px at 80% 10%, rgba(255,255,255,0.4), transparent),
+      radial-gradient(1px 1px at 60% 70%, rgba(255,255,255,0.35), transparent),
+      radial-gradient(1.5px 1.5px at 30% 85%, rgba(255,255,255,0.4), transparent),
+      radial-gradient(1px 1px at 90% 60%, rgba(255,255,255,0.3), transparent),
+      radial-gradient(1.5px 1.5px at 45% 40%, rgba(255,255,255,0.35), transparent),
+      radial-gradient(1px 1px at 20% 55%, rgba(255,255,255,0.25), transparent);
+    background-repeat: repeat;
+    background-size: 400px 400px;
+    opacity: 0.6;
+  }
+
+  /* ---------- Sidebar ---------- */
+  #sidebar {
+    position: relative;
+    z-index: 1;
+    width: 300px;
+    min-width: 300px;
+    height: 100%;
+    background: linear-gradient(180deg, var(--bg-panel) 0%, #0d0826 100%);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    padding: 28px 18px;
+    overflow-y: auto;
+  }
+
+  #sidebar header {
+    padding: 4px 10px 24px;
+  }
+
+  #sidebar header .logo {
+    width: 44px;
+    height: 44px;
+    margin-bottom: 14px;
+    border-radius: 10px;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid var(--border);
+    padding: 6px;
+  }
+
+  #sidebar header .logo img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    display: block;
+  }
+
+  #sidebar header .eyebrow {
+    font-size: 11px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--accent);
+    font-weight: 600;
+    margin-bottom: 6px;
+  }
+
+  #sidebar header h1 {
+    font-size: 20px;
+    margin: 0 0 6px;
+    font-weight: 600;
+    line-height: 1.3;
+  }
+
+  #sidebar header p {
+    font-size: 13px;
+    color: var(--text-secondary);
+    margin: 0;
+    line-height: 1.5;
+  }
+
+  nav {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .nav-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    text-align: left;
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: 12px;
+    padding: 12px 12px;
+    cursor: pointer;
+    color: inherit;
+    font-family: inherit;
+    transition: background 0.15s ease, border-color 0.15s ease, transform 0.1s ease;
+  }
+
+  .nav-item:hover {
+    background: var(--bg-panel-hover);
+    border-color: var(--border);
+  }
+
+  .nav-item.active {
+    background: linear-gradient(135deg, rgba(168,120,247,0.18), rgba(58,127,208,0.14));
+    border-color: rgba(168, 120, 247, 0.45);
+    box-shadow: 0 0 0 1px rgba(168,120,247,0.08) inset, 0 4px 18px rgba(80, 40, 160, 0.25);
+  }
+
+  .nav-icon {
+    flex: none;
+    width: 34px;
+    height: 34px;
+    border-radius: 9px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 17px;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid var(--border);
+  }
+
+  .nav-item.active .nav-icon {
+    background: linear-gradient(135deg, var(--accent), var(--accent-2));
+    border-color: transparent;
+  }
+
+  .nav-text .nav-title {
+    font-size: 14px;
+    font-weight: 600;
+    margin-bottom: 3px;
+    color: var(--text-primary);
+  }
+
+  .nav-text .nav-desc {
+    font-size: 12px;
+    color: var(--text-secondary);
+    line-height: 1.4;
+  }
+
+  #sidebar footer {
+    margin-top: auto;
+    padding: 16px 10px 4px;
+    font-size: 11px;
+    color: var(--text-muted);
+    border-top: 1px solid var(--border);
+  }
+
+  /* ---------- Main content ---------- */
+  #main {
+    position: relative;
+    z-index: 1;
+    flex: 1;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    padding: 24px 24px 24px 0;
+  }
+
+  #topbar {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: 0 4px 16px 28px;
+  }
+
+  #topbar h2 {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 600;
+  }
+
+  #topbar p {
+    margin: 0;
+    font-size: 13px;
+    color: var(--text-secondary);
+  }
+
+  #frame-wrap {
+    flex: 1;
+    margin-left: 4px;
+    border-radius: 16px;
+    overflow: hidden;
+    background: #ffffff;
+    border: 1px solid var(--border);
+    box-shadow: 0 20px 60px rgba(0,0,0,0.45);
+    position: relative;
+  }
+
+  #content-frame {
+    width: 100%;
+    height: 100%;
+    border: 0;
+    display: block;
+    background: #ffffff;
+  }
+
+  @media (max-width: 780px) {
+    body { flex-direction: column; overflow: auto; }
+    #sidebar { width: 100%; min-width: 0; height: auto; border-right: none; border-bottom: 1px solid var(--border); }
+    #main { padding: 16px; height: 70vh; }
+    #topbar { padding-left: 4px; }
+  }
+</style>
+</head>
+<body>
+
+  <aside id="sidebar">
+    <header>
+      <div class="logo"><img src="img/logo_color_vector.svg" alt="Logo"></div>
+      <div class="eyebrow">Laboratório Estelar</div>
+      <h1>Eclíptica &amp; Retrógrados</h1>
+      <p>Explore como os planetas se movem no céu visto da Terra.</p>
+    </header>
+
+    <nav id="nav">
+      <button class="nav-item" data-src="Ecliptica-animado.html"
+        data-title="Eclíptica Animada"
+        data-desc="Visualização animada das órbitas ao redor do Sol e da faixa do zodíaco.">
+        <span class="nav-icon">🪐</span>
+        <span class="nav-text">
+          <div class="nav-title">Eclíptica Animada</div>
+          <div class="nav-desc">Órbitas do sistema solar em movimento</div>
+        </span>
+      </button>
+
+      <button class="nav-item" data-src="ecliptica_movimento_retrogrado.html"
+        data-title="Movimento Retrógrado"
+        data-desc="Simulação interativa mostrando por que os planetas parecem andar para trás no céu.">
+        <span class="nav-icon">🔄</span>
+        <span class="nav-text">
+          <div class="nav-title">Movimento Retrógrado</div>
+          <div class="nav-desc">Simulação interativa Terra × planeta</div>
+        </span>
+      </button>
+
+      <button class="nav-item" data-src="duracao_frequencia_retrogrados.html"
+        data-title="Duração e Frequência"
+        data-desc="Comparação da duração típica e do intervalo entre retrógrados de cada planeta.">
+        <span class="nav-icon">📊</span>
+        <span class="nav-text">
+          <div class="nav-title">Duração e Frequência</div>
+          <div class="nav-desc">Comparativo entre os planetas</div>
+        </span>
+      </button>
+    </nav>
+
+    <footer>Clique em um item para exibir ao lado.</footer>
+  </aside>
+
+  <main id="main">
+    <div id="topbar">
+      <h2 id="topbar-title">Eclíptica Animada</h2>
+      <p id="topbar-desc">Visualização animada das órbitas ao redor do Sol e da faixa do zodíaco.</p>
+    </div>
+    <div id="frame-wrap">
+      <iframe id="content-frame" src="Ecliptica-animado.html" title="Conteúdo selecionado"></iframe>
+    </div>
+  </main>
+
+  <script>
+    const items = document.querySelectorAll('.nav-item');
+    const frame = document.getElementById('content-frame');
+    const title = document.getElementById('topbar-title');
+    const desc = document.getElementById('topbar-desc');
+
+    items.forEach(item => {
+      item.addEventListener('click', () => {
+        items.forEach(i => i.classList.remove('active'));
+        item.classList.add('active');
+        frame.src = item.dataset.src;
+        title.textContent = item.dataset.title;
+        desc.textContent = item.dataset.desc;
+      });
+    });
+
+    items[0].classList.add('active');
+  </script>
+
+</body>
+</html>

@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Movimento Retrógrado</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css">
+<style>
+  :root {
+    --text-primary: #1a1a2e;
+    --text-secondary: #66667a;
+    --text-muted: #9999ac;
+    --text-accent: #0f8a68;
+    --surface-1: #eef0f4;
+    --border: #e2e4ea;
+    --border-accent: #1D9E75;
+    --radius: 10px;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    color: var(--text-primary);
+    background: #fff;
+    padding: 32px 28px;
+    max-width: 720px;
+    margin: 0 auto;
+  }
+  button {
+    font-family: inherit;
+    background: #fff;
+    color: var(--text-primary);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 6px 14px;
+    cursor: pointer;
+    transition: border-color 0.15s, color 0.15s;
+  }
+  button:hover { border-color: var(--border-accent); }
+  input[type="range"] { accent-color: var(--border-accent); }
+</style>
+</head>
+<body>
+<script>
+  function sendPrompt(text) { console.log('sendPrompt:', text); }
+</script>
+<h2 class="sr-only" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);">Animação interativa mostrando as órbitas da Terra e de um planeta ao redor do Sol, com a posição aparente do planeta projetada na faixa do zodíaco, ilustrando o movimento retrógrado.</h2>
+
+<div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:0 0 12px;">
+  <div id="plbtns" style="display:flex;gap:6px;flex-wrap:wrap;"></div>
+  <button id="playbtn" aria-label="Pausar" style="width:38px;"><i class="ti ti-player-pause" id="playicon" aria-hidden="true"></i></button>
+</div>
+
+<div style="display:flex;align-items:center;gap:12px;margin:0 0 14px;">
+  <label style="font-size:13px;color:var(--text-secondary);white-space:nowrap;">Velocidade</label>
+  <input type="range" id="spd" min="20" max="500" step="10" value="150" style="flex:1;" />
+  <span id="spdout" style="font-size:13px;color:var(--text-secondary);min-width:92px;text-align:right;">150 dias/s</span>
+</div>
+
+<div style="display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:0 0 10px;">
+  <span id="estado" style="font-size:13px;padding:4px 12px;border-radius:var(--radius);background:#E1F5EE;color:#085041;">Movimento direto</span>
+  <span style="font-size:13px;color:var(--text-secondary);">Signo aparente: <span id="signo" style="color:var(--text-primary);font-weight:500;">—</span></span>
+  <span style="font-size:13px;color:var(--text-secondary);margin-left:auto;" id="tempo">0 dias</span>
+</div>
+
+<canvas id="sky" style="width:100%;max-width:640px;display:block;margin:0 auto;"></canvas>
+
+<p style="font-size:13px;color:var(--text-secondary);margin:14px 0 4px;">Longitude aparente do planeta no céu (vista da Terra) ao longo do tempo — os trechos <span style="color:#993C1D;font-weight:500;">laranja</span> são retrógrados:</p>
+<canvas id="chart" style="width:100%;max-width:640px;display:block;margin:0 auto;"></canvas>
+
+<div style="display:flex;gap:8px;flex-wrap:wrap;margin:16px 0 0;">
+  <button onclick="sendPrompt('Por que os signos astrológicos não coincidem mais com as constelações reais no céu?')" style="font-size:13px;">Signos vs constelações ↗</button>
+  <button onclick="sendPrompt('Quanto tempo dura o retrógrado de cada planeta e com que frequência acontece?')" style="font-size:13px;">Duração de cada retrógrado ↗</button>
+</div>
+
+<script>
+const PL = {
+  mercurio:{n:'Mercúrio', a:0.387, T:87.97},
+  venus:{n:'Vênus', a:0.723, T:224.7},
+  marte:{n:'Marte', a:1.524, T:686.98},
+  jupiter:{n:'Júpiter', a:5.203, T:4332.6},
+  saturno:{n:'Saturno', a:9.537, T:10759}
+};
+const TE = 365.256;
+const SIGNS = [['♈','Áries'],['♉','Touro'],['♊','Gêmeos'],['♋','Câncer'],['♌','Leão'],['♍','Virgem'],['♎','Libra'],['♏','Escorpião'],['♐','Sagitário'],['♑','Capricórnio'],['♒','Aquário'],['♓','Peixes']];
+
+const sky = document.getElementById('sky');
+const chart = document.getElementById('chart');
+const dpr = window.devicePixelRatio || 1;
+const SW = 640, SH = 545, CW = 640, CH = 150;
+sky.width = SW*dpr; sky.height = SH*dpr; sky.style.height = 'auto';
+chart.width = CW*dpr; chart.height = CH*dpr; chart.style.height = 'auto';
+const sctx = sky.getContext('2d'); sctx.scale(dpr,dpr);
+const cctx = chart.getContext('2d'); cctx.scale(dpr,dpr);
+
+let sel = 'marte', t = 0, playing = true, speed = 150;
+let earth0 = 0, plan0 = 0, samples = [], lastSampleT = -1, lastTs = null;
+
+function synodic(){ const T = PL[sel].T; return 1/Math.abs(1/TE - 1/T); }
+
+function setPlanet(key){
+  sel = key; t = 0; samples = []; lastSampleT = -1;
+  const p = PL[sel];
+  if (p.a > 1){ plan0 = 0; earth0 = -45; } else { earth0 = 0; plan0 = -45; }
+  document.querySelectorAll('#plbtns button').forEach(b=>{
+    const on = b.dataset.k === key;
+    b.style.border = on ? '2px solid var(--border-accent)' : '';
+    b.style.color = on ? 'var(--text-accent)' : '';
+  });
+}
+
+const btnwrap = document.getElementById('plbtns');
+Object.keys(PL).forEach(k=>{
+  const b = document.createElement('button');
+  b.textContent = PL[k].n; b.dataset.k = k; b.style.fontSize = '13px';
+  b.onclick = ()=> setPlanet(k);
+  btnwrap.appendChild(b);
+});
+
+document.getElementById('playbtn').onclick = ()=>{
+  playing = !playing;
+  document.getElementById('playicon').className = playing ? 'ti ti-player-pause' : 'ti ti-player-play';
+  document.getElementById('playbtn').setAttribute('aria-label', playing ? 'Pausar' : 'Continuar');
+};
+const spd = document.getElementById('spd');
+spd.oninput = ()=>{
+  speed = +spd.value;
+  document.getElementById('spdout').textContent = Math.round(speed) + ' dias/s';
+};
+
+function pos(a, T, l0, time){
+  const th = (l0 + 360*time/T) * Math.PI/180;
+  return { x: a*Math.cos(th), y: a*Math.sin(th) };
+}
+function lonAt(time){
+  const p = PL[sel];
+  const e = pos(1, TE, earth0, time);
+  const q = pos(p.a, p.T, plan0, time);
+  let L = Math.atan2(q.y - e.y, q.x - e.x) * 180/Math.PI;
+  return (L % 360 + 360) % 360;
+}
+function sample(){
+  while (lastSampleT + 1 <= t){
+    lastSampleT += 1;
+    const L = lonAt(lastSampleT);
+    let retro = false;
+    if (samples.length){
+      const d = ((L - samples[samples.length-1].lon + 540) % 360) - 180;
+      retro = d < 0;
+    }
+    samples.push({ t: lastSampleT, lon: L, retro });
+  }
+  const keep = t - synodic()*2.2 - 10;
+  while (samples.length && samples[0].t < keep) samples.shift();
+}
+
+function v(name){ return getComputedStyle(sky).getPropertyValue(name).trim() || '#888'; }
+
+function drawSky(){
+  const cB = v('--border'), cTm = v('--text-muted'), cTs = v('--text-secondary'), cTp = v('--text-primary');
+  const cx = 320, cy = 272, ringR = 236, trailR = 210;
+  const p = PL[sel];
+  const sc = 188 / Math.max(1, p.a);
+  sctx.clearRect(0,0,SW,SH);
+
+  sctx.strokeStyle = cB; sctx.lineWidth = 1;
+  sctx.beginPath(); sctx.arc(cx, cy, ringR, 0, 7); sctx.stroke();
+  sctx.beginPath(); sctx.arc(cx, cy, ringR-18, 0, 7); sctx.stroke();
+  sctx.font = '15px sans-serif'; sctx.textAlign = 'center'; sctx.textBaseline = 'middle';
+  for (let i=0; i<12; i++){
+    const a1 = i*30*Math.PI/180;
+    sctx.beginPath();
+    sctx.moveTo(cx + (ringR-18)*Math.cos(a1), cy - (ringR-18)*Math.sin(a1));
+    sctx.lineTo(cx + ringR*Math.cos(a1), cy - ringR*Math.sin(a1));
+    sctx.stroke();
+    const am = (i*30+15)*Math.PI/180;
+    sctx.fillStyle = cTm;
+    sctx.fillText(SIGNS[i][0], cx + (ringR-9)*Math.cos(am), cy - (ringR-9)*Math.sin(am)+1);
+  }
+
+  sctx.strokeStyle = cB;
+  sctx.beginPath(); sctx.arc(cx, cy, 1*sc, 0, 7); sctx.stroke();
+  sctx.beginPath(); sctx.arc(cx, cy, p.a*sc, 0, 7); sctx.stroke();
+
+  const trailStart = t - Math.min(700, synodic()*0.95);
+  for (const s of samples){
+    if (s.t < trailStart) continue;
+    const age = (t - s.t) / Math.max(1, t - trailStart);
+    const a1 = s.lon*Math.PI/180;
+    sctx.globalAlpha = Math.max(0.08, 1 - age*0.9);
+    sctx.fillStyle = s.retro ? '#D85A30' : '#1D9E75';
+    sctx.beginPath();
+    sctx.arc(cx + trailR*Math.cos(a1), cy - trailR*Math.sin(a1), s.retro ? 2.6 : 1.8, 0, 7);
+    sctx.fill();
+  }
+  sctx.globalAlpha = 1;
+
+  const e = pos(1, TE, earth0, t);
+  const q = pos(p.a, p.T, plan0, t);
+  const ex = cx + e.x*sc, ey = cy - e.y*sc;
+  const qx = cx + q.x*sc, qy = cy - q.y*sc;
+  const L = lonAt(t) * Math.PI/180;
+  const rx = cx + trailR*Math.cos(L), ry = cy - trailR*Math.sin(L);
+
+  sctx.strokeStyle = cTm; sctx.setLineDash([4,4]); sctx.lineWidth = 1;
+  sctx.beginPath(); sctx.moveTo(ex, ey); sctx.lineTo(rx, ry); sctx.stroke();
+  sctx.setLineDash([]);
+
+  sctx.fillStyle = '#EF9F27';
+  sctx.beginPath(); sctx.arc(cx, cy, 10, 0, 7); sctx.fill();
+  sctx.fillStyle = cTs; sctx.font = '12px sans-serif';
+  sctx.fillText('Sol', cx, cy + 24);
+
+  sctx.fillStyle = '#378ADD';
+  sctx.beginPath(); sctx.arc(ex, ey, 6, 0, 7); sctx.fill();
+  sctx.fillStyle = cTp;
+  sctx.fillText('Terra', ex, ey + 17);
+
+  sctx.fillStyle = '#D85A30';
+  sctx.beginPath(); sctx.arc(qx, qy, 7, 0, 7); sctx.fill();
+  sctx.fillStyle = cTp;
+  sctx.fillText(p.n, qx, qy + 18);
+
+  const retroNow = samples.length ? samples[samples.length-1].retro : false;
+  sctx.fillStyle = retroNow ? '#D85A30' : '#1D9E75';
+  sctx.beginPath(); sctx.arc(rx, ry, 5, 0, 7); sctx.fill();
+
+  const est = document.getElementById('estado');
+  if (retroNow){
+    est.textContent = 'Retrógrado'; est.style.background = '#FAECE7'; est.style.color = '#712B13';
+  } else {
+    est.textContent = 'Movimento direto'; est.style.background = '#E1F5EE'; est.style.color = '#085041';
+  }
+  const si = Math.floor(((lonAt(t)%360)+360)%360 / 30) % 12;
+  document.getElementById('signo').textContent = SIGNS[si][0] + ' ' + SIGNS[si][1];
+  const anos = t/365.25;
+  document.getElementById('tempo').textContent = Math.round(t).toLocaleString('pt-BR') + ' dias (' + anos.toFixed(1) + ' anos)';
+}
+
+function drawChart(){
+  const cB = v('--border'), cTm = v('--text-muted');
+  cctx.clearRect(0,0,CW,CH);
+  const ml = 40, mr = 8, mt = 8, mb = 20;
+  const W = synodic()*2.2;
+  const t0 = Math.max(0, t - W);
+  const X = tt => ml + (tt - t0) / W * (CW - ml - mr);
+  const Y = L => mt + (1 - L/360) * (CH - mt - mb);
+
+  cctx.strokeStyle = cB; cctx.lineWidth = 1;
+  cctx.font = '11px sans-serif'; cctx.fillStyle = cTm; cctx.textAlign = 'right'; cctx.textBaseline = 'middle';
+  for (const g of [0, 90, 180, 270, 360]){
+    cctx.beginPath(); cctx.moveTo(ml, Y(g)); cctx.lineTo(CW-mr, Y(g)); cctx.stroke();
+    cctx.fillText(g + '°', ml-5, Y(g));
+  }
+  cctx.textAlign = 'center'; cctx.textBaseline = 'top';
+  cctx.fillText('tempo →', (ml+CW-mr)/2, CH-14);
+
+  cctx.lineWidth = 2; cctx.lineCap = 'round';
+  for (let i=1; i<samples.length; i++){
+    const a = samples[i-1], b = samples[i];
+    if (b.t < t0) continue;
+    if (Math.abs(b.lon - a.lon) > 180) continue;
+    cctx.strokeStyle = b.retro ? '#D85A30' : '#1D9E75';
+    cctx.beginPath();
+    cctx.moveTo(X(a.t), Y(a.lon));
+    cctx.lineTo(X(b.t), Y(b.lon));
+    cctx.stroke();
+  }
+}
+
+function frame(ts){
+  if (lastTs === null) lastTs = ts;
+  const dts = Math.min(0.05, (ts - lastTs)/1000);
+  lastTs = ts;
+  if (playing) t += speed * dts;
+  sample();
+  drawSky();
+  drawChart();
+  requestAnimationFrame(frame);
+}
+
+setPlanet('marte');
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>
