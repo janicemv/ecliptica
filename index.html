@@ -174,12 +174,69 @@
     line-height: 1.4;
   }
 
-  #sidebar footer {
+  .socials {
     margin-top: auto;
-    padding: 16px 10px 4px;
+    padding: 18px 10px 4px;
+    border-top: 1px solid var(--border);
+  }
+
+  .socials-label {
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-bottom: 12px;
+  }
+
+  .social-links {
+    display: flex;
+    gap: 10px;
+  }
+
+  .social-link {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    text-decoration: none;
+    font-family: Georgia, serif;
+    font-weight: 700;
+    font-size: 15px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.35);
+    transition: transform 0.15s ease, box-shadow 0.15s ease, filter 0.15s ease;
+  }
+
+  .social-link:hover {
+    transform: translateY(-3px) scale(1.06);
+    box-shadow: 0 8px 18px rgba(0,0,0,0.5);
+    filter: brightness(1.08);
+  }
+
+  .social-link svg {
+    width: 17px;
+    height: 17px;
+    fill: #fff;
+  }
+
+  .social-link.instagram {
+    background: radial-gradient(circle at 30% 110%, #fdf497 0%, #fdf497 5%, #fd5949 45%, #d6249f 60%, #285aeb 90%);
+  }
+
+  .social-link.substack {
+    background: #ff6719;
+  }
+
+  .social-link.wordpress {
+    background: #21759b;
+  }
+
+  #sidebar footer {
+    padding: 14px 10px 4px;
     font-size: 11px;
     color: var(--text-muted);
-    border-top: 1px solid var(--border);
   }
 
   /* ---------- Main content ---------- */
@@ -281,7 +338,23 @@
       </button>
     </nav>
 
-    <footer>Clique em um item para exibir ao lado.</footer>
+    <div class="socials">
+      <div class="socials-label">Siga o projeto</div>
+      <div class="social-links">
+         <a class="social-link substack" href="https://substack.com/@aileendaw" target="_blank" rel="noopener noreferrer" title="Substack">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M22.539 8.242H1.46V5.406h21.08v2.836zM1.46 10.812V24L12 18.11 22.54 24V10.812H1.46zM22.54 0H1.46v2.836h21.08V0z"/></svg>
+        </a>
+        <a class="social-link instagram" href="https://www.instagram.com/aileendaw" target="_blank" rel="noopener noreferrer" title="Instagram">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.16c3.2 0 3.58.01 4.85.07 3.25.15 4.77 1.69 4.92 4.92.06 1.27.07 1.65.07 4.85s-.01 3.58-.07 4.85c-.15 3.23-1.66 4.77-4.92 4.92-1.27.06-1.64.07-4.85.07s-3.58-.01-4.85-.07c-3.26-.15-4.77-1.7-4.92-4.92-.06-1.27-.07-1.65-.07-4.85s.02-3.58.07-4.85c.15-3.23 1.66-4.77 4.92-4.92 1.27-.06 1.65-.07 4.85-.07zm0 5.4a4.44 4.44 0 100 8.88 4.44 4.44 0 000-8.88zm0 7.32a2.88 2.88 0 110-5.76 2.88 2.88 0 010 5.76zm5.66-7.5a1.04 1.04 0 100-2.08 1.04 1.04 0 000 2.08z"/></svg>
+        </a>
+        <a class="social-link instagram" href="https://www.instagram.com/adhara_caminhoestelar" target="_blank" rel="noopener noreferrer" title="Instagram">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.16c3.2 0 3.58.01 4.85.07 3.25.15 4.77 1.69 4.92 4.92.06 1.27.07 1.65.07 4.85s-.01 3.58-.07 4.85c-.15 3.23-1.66 4.77-4.92 4.92-1.27.06-1.64.07-4.85.07s-3.58-.01-4.85-.07c-3.26-.15-4.77-1.7-4.92-4.92-.06-1.27-.07-1.65-.07-4.85s.02-3.58.07-4.85c.15-3.23 1.66-4.77 4.92-4.92 1.27-.06 1.65-.07 4.85-.07zm0 5.4a4.44 4.44 0 100 8.88 4.44 4.44 0 000-8.88zm0 7.32a2.88 2.88 0 110-5.76 2.88 2.88 0 010 5.76zm5.66-7.5a1.04 1.04 0 100-2.08 1.04 1.04 0 000 2.08z"/></svg>
+        </a>
+        <a class="social-link wordpress" href="https://adharastarpath.wordpress.com/" target="_blank" rel="noopener noreferrer" title="Adhara Starpath (blog)">W</a>
+      </div>
+    </div>
+
+    <footer>Criado com ❤️ por Aileen Daw & Claude Fable / Claude Code</footer>
   </aside>
 
   <main id="main">
