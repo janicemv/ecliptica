@@ -215,6 +215,7 @@
 
 ## 2020
 # Caminho Adhara
+- Fundado por Aileen Daw
 - Reinterpretação crítica da tradição estelar.
 - Integra:
     - Mesopotâmia
