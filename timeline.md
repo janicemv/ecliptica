@@ -161,7 +161,7 @@
 - Define oficialmente as 88 constelações.
 - Padroniza a nomenclatura astronômica.
 
-## Décadas de 1940–1960
+## 1950–1960
 # Wicca Moderna
 - Gerald Gardner.
 - Uso simbólico das estrelas.
@@ -189,7 +189,7 @@
 - Populariza o sistema dos parans.
 - Renova o estudo moderno das estrelas fixas.
 
-## Décadas de 1980–2000
+## 1980–2000
 # Raven Grimassi
 - Incorpora as Quatro Estrelas Reais à Stregheria.
 - Associa as estrelas aos Grigori.
@@ -197,7 +197,7 @@
 
 # IV. O RETORNO ÀS FONTES
 
-## Décadas de 1960–2020
+## 1960–2020
 # Revolução da Assiriologia
 - Otto Neugebauer.
 - Abraham Sachs.
@@ -213,7 +213,7 @@
     - Astronomia babilônica
 - Revisão crítica da história da astrologia.
 
-## Século XXI
+## 2020
 # Caminho Adhara
 - Reinterpretação crítica da tradição estelar.
 - Integra:
